@@ -17,6 +17,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 import edu.wpi.first.math.MathUtil;
@@ -42,10 +43,16 @@ public class RobotContainer {
 
   private void configureBindings() {
     m_drivetrain.setDefaultCommand( // Drivetrain will execute this command periodically
-        m_drivetrain.applyRequest(() -> drive.withVelocityX(MathUtil.applyDeadband(-joystick.getLeftY(), .1) * MaxSpeed) // Drive forward with
-                                                                                           // negative Y (forward)
-            .withVelocityY(MathUtil.applyDeadband(-joystick.getLeftX(), .1) * MaxSpeed) // Drive left with negative X (left)
-            .withRotationalRate(MathUtil.applyDeadband(-joystick.getRightX(), .1) * MaxAngularRate) // Drive counterclockwise with negative X (left)
+        m_drivetrain.applyRequest(() -> drive.withVelocityX(MathUtil.applyDeadband(-joystick.getLeftY(), .1) * MaxSpeed) // Drive
+                                                                                                                         // forward
+                                                                                                                         // with
+            // negative Y (forward)
+            .withVelocityY(MathUtil.applyDeadband(-joystick.getLeftX(), .1) * MaxSpeed) // Drive left with negative X
+                                                                                        // (left)
+            .withRotationalRate(MathUtil.applyDeadband(-joystick.getRightX(), .1) * MaxAngularRate) // Drive
+                                                                                                    // counterclockwise
+                                                                                                    // with negative X
+                                                                                                    // (left)
         ));
 
     joystick.a().whileTrue(m_drivetrain.applyRequest(() -> brake));
@@ -54,6 +61,14 @@ public class RobotContainer {
 
     // reset the field-centric heading on left bumper press
     joystick.leftBumper().onTrue(m_drivetrain.runOnce(() -> m_drivetrain.seedFieldRelative()));
+
+    /*
+     * Back/Start select dynamic/quasistatic, Y/X select forward/reverse direction
+     */
+    joystick.back().and(joystick.y()).whileTrue(m_drivetrain.sysIdDynamic(Direction.kForward));
+    joystick.back().and(joystick.x()).whileTrue(m_drivetrain.sysIdDynamic(Direction.kReverse));
+    joystick.start().and(joystick.y()).whileTrue(m_drivetrain.sysIdQuasistatic(Direction.kForward));
+    joystick.start().and(joystick.x()).whileTrue(m_drivetrain.sysIdQuasistatic(Direction.kReverse));
 
     if (Utils.isSimulation()) {
       m_drivetrain.seedFieldRelative(new Pose2d(new Translation2d(), Rotation2d.fromDegrees(90)));
